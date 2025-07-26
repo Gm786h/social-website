@@ -1,0 +1,86 @@
+
+
+.chat input{
+  width: 950px;
+  height: 20px;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 20px;
+  
+}
+.chat button{
+  background-color: rgb(104, 138, 104);
+  padding: 10px;
+  width: 7%;
+  border-radius: 15px;
+  cursor: pointer;
+
+}
+.topnav {
+  position: sticky;
+  top: 0;
+  width: 97%;
+  overflow: hidden;
+  background-color: #818080;
+  padding: 16px 32px;
+  
+
+}
+.topnav:hover{
+  background-color: #333;
+}
+
+/* Style the links inside the navigation bar */
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 20px;
+  display: flex;
+  align-items: center; /* Vertically center username and image */
+  gap: 8px; /* Space between username and image */
+}
+
+/* Add a color to the active/current link */
+.topnav a.active {
+ 
+  color: white;
+  background-color: rgb(75, 141, 75);
+  font-weight: 600;
+  font-style: oblique;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  margin-top: 5px;
+  border-radius: 15px;
+ 
+}
+.profile-pic {
+  height: 44px;
+  width: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.right{
+  display: flex;
+  justify-content: end;
+}
+footer {
+  background-color: #b3b0b0;
+  padding: 10px;
+  text-align: center;
+  color: white;
+}
+footer:hover{
+  background-color: #6b6868;
+}
+
+
+.comment-input{
+  padding: 5px 10px;
+   border: 1px solid #333;
+  border-radius: 20px;
+}
+
+
+

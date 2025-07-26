@@ -1,0 +1,206 @@
+/* NewsFeed Container */
+.newsfeed-container {
+  max-width: 550px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+/* Header */
+.newsfeed-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px 0;
+  background: linear-gradient(135deg, #7c8dda 0%, #d7aefd 100%);
+  color: white;
+  border-radius: 10px;
+
+}
+
+.newsfeed-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+
+}
+
+/* Posts Container */
+.posts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Individual Post Wrapper */
+.post-wrapper {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.post-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading and Status Messages */
+.loading-message,
+.no-more-posts {
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 1.1rem;
+  color: #666;
+  background: white;
+  border-radius: 10px;
+  margin: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.loading-message {
+  color: #667eea;
+  font-weight: 600;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.no-more-posts {
+  color: #888;
+  font-style: italic;
+  border: 2px dashed #ddd;
+  background: #f9f9f9;
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .newsfeed-container {
+    padding: 15px;
+    max-width: 100%;
+  }
+  
+  .newsfeed-header h1 {
+    font-size: 2rem;
+  }
+  
+  .posts-container {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .newsfeed-container {
+    padding: 10px;
+  }
+  
+  .newsfeed-header {
+    margin-bottom: 20px;
+    padding: 15px 0;
+  }
+  
+  .newsfeed-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .posts-container {
+    gap: 10px;
+  }
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5a6fd8;
+}
+
+/* Loading Spinner Alternative */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error-message {
+  text-align: center;
+  padding: 20px;
+  background: #fee;
+  color: #c33;
+  border-radius: 8px;
+  margin: 20px 0;
+  border: 1px solid #fcc;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.empty-state h2 {
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Fade-in Animation for Posts */
+.post-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
