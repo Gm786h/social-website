@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import "./chat.css";
+import "./Chat.css";
 import axios from "axios";
 const Base_Url = import.meta.env.VITE_BASE_URL;
 const Chat = () => {
