@@ -77,11 +77,8 @@ const Chat = () => {
     const element = e.target;
     const { scrollTop, scrollHeight, clientHeight } = element;
     
-    console.log('Friends scroll:', { scrollTop, scrollHeight, clientHeight, diff: scrollHeight - scrollTop - clientHeight });
-    
     // Load more friends when user scrolls near the bottom (within 100px)
     if (scrollHeight - scrollTop - clientHeight < 100) {
-      console.log('Loading more friends, current page:', friendsPage);
       const nextPage = friendsPage + 1;
       setFriendsPage(nextPage);
       fetchFriends(nextPage, true);
@@ -92,10 +89,8 @@ const Chat = () => {
   useEffect(() => {
     const friendsList = friendsListRef.current;
     if (friendsList) {
-      console.log('Setting up friends scroll listener');
       friendsList.addEventListener("scroll", handleFriendsScroll, { passive: true });
       return () => {
-        console.log('Removing friends scroll listener');
         friendsList.removeEventListener("scroll", handleFriendsScroll);
       };
     }
@@ -130,8 +125,6 @@ const Chat = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log('Raw API response:', JSON.stringify(res.data, null, 2)); // Debug log
-
       const messages = res.data
         .map((msg, index) => ({
           id: msg.id || `${msg.senderId}-${msg.createdAt}`, 
@@ -140,50 +133,57 @@ const Chat = () => {
           createdAt: msg.createdAt,
           originalIndex: index, // Keep track of original API order
         }))
-        // ENHANCED: More robust sorting with fallback to original order
+        // ENHANCED: More robust sorting prioritizing message ID over timestamp
         .sort((a, b) => {
+          // Primary sort: by numeric ID (most reliable for sequential messages)
+          const idA = parseInt(a.id) || 0;
+          const idB = parseInt(b.id) || 0;
+          
+          if (idA !== idB && idA > 0 && idB > 0) {
+            return idA - idB;
+          }
+          
+          // Secondary sort: by timestamp
           const timeA = new Date(a.createdAt).getTime();
           const timeB = new Date(b.createdAt).getTime();
           
-          // If timestamps are exactly the same, use original API order
-          if (timeA === timeB) {
-            return a.originalIndex - b.originalIndex;
+          if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) {
+            return timeA - timeB;
           }
           
-          // If one timestamp is invalid, put it at the end
-          if (isNaN(timeA)) return 1;
-          if (isNaN(timeB)) return -1;
-          
-          return timeA - timeB;
+          // Fallback: use original API order
+          return a.originalIndex - b.originalIndex;
         })
         .map(({ originalIndex, ...msg }) => msg); // Remove originalIndex from final result
-
-      console.log('Sorted messages:', JSON.stringify(messages.map(m => ({ text: m.text, createdAt: m.createdAt, id: m.id })), null, 2)); // Debug log
 
       setChatHistory((prev) => {
         const existingMessages = prev[friend.id] || [];
         
         if (isLoadMore) {
-          const existingIds = new Set(existingMessages.map(msg => msg.id));
-          const newMessages = messages.filter(msg => !existingIds.has(msg.id));
-          // ENHANCED: More robust sorting for load more
+          const existingIds = new Set(existingMessages.map(msg => parseInt(msg.id) || 0));
+          const newMessages = messages.filter(msg => !existingIds.has(parseInt(msg.id) || 0));
           const allMessages = [...newMessages, ...existingMessages];
+          // ENHANCED: Improved sorting for load more with ID priority
           const sortedMessages = allMessages.sort((a, b) => {
+            // Primary sort: by numeric ID
+            const idA = parseInt(a.id) || 0;
+            const idB = parseInt(b.id) || 0;
+            
+            if (idA !== idB && idA > 0 && idB > 0) {
+              return idA - idB;
+            }
+            
+            // Secondary sort: by timestamp
             const timeA = new Date(a.createdAt).getTime();
             const timeB = new Date(b.createdAt).getTime();
             
-            // If timestamps are the same, sort by ID as fallback
-            if (timeA === timeB) {
-              return (a.id || '').localeCompare(b.id || '');
+            if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) {
+              return timeA - timeB;
             }
             
-            if (isNaN(timeA)) return 1;
-            if (isNaN(timeB)) return -1;
-            
-            return timeA - timeB;
+            // Fallback: string comparison of IDs
+            return (a.id || '').toString().localeCompare((b.id || '').toString());
           });
-          
-          console.log('Load more - final sorted messages:', JSON.stringify(sortedMessages.map(m => ({ text: m.text, createdAt: m.createdAt, id: m.id })), null, 2)); // Debug log
           
           return {
             ...prev,
@@ -200,7 +200,7 @@ const Chat = () => {
         setHasMore(false);
       }
       if (!isLoadMore) {
-        setTimeout(scrollToBottom, 100);
+        scrollToBottom();
       }
 
     } catch (err) {
@@ -276,7 +276,7 @@ const Chat = () => {
     
     // Scroll to bottom if user was at bottom
     if (wasNearBottom) {
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
     }
 
     try {
@@ -309,74 +309,78 @@ const Chat = () => {
     }
   };
 
-  // ENHANCED: Poll for new messages with better debugging and sorting
+  // ENHANCED: Poll for new messages with improved ordering and debouncing
   useEffect(() => {
     if (!selectedFriend) return;
 
-    const interval = setInterval(async () => {
-      const msgs = chatHistory[selectedFriend.id] || [];
-      if (msgs.length === 0) return;
+    let pollTimeout;
+    let isPolling = false;
 
-      const lastTime = msgs[msgs.length - 1]?.createdAt;
-      const wasNearBottom = isNearBottom();
+    const pollForMessages = async () => {
+      if (isPolling) return;
+      isPolling = true;
 
       try {
+        const msgs = chatHistory[selectedFriend.id] || [];
+        if (msgs.length === 0) {
+          isPolling = false;
+          return;
+        }
+
+        // Use the last message ID instead of timestamp for more reliable polling
+        const lastMessageId = Math.max(...msgs.map(m => parseInt(m.id) || 0));
+        const wasNearBottom = isNearBottom();
+
         const res = await axios.get(
-          `${Base_Url}/api/message/${selectedFriend.id}?after=${lastTime}&limit=10`,
+          `${Base_Url}/api/message/${selectedFriend.id}?afterId=${lastMessageId}&limit=20`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log('Polling - Raw new messages:', JSON.stringify(res.data, null, 2)); // Debug log
+        if (res.data && res.data.length > 0) {
+          const newMsgs = res.data
+            .map((msg, index) => ({
+              id: msg.id || `${msg.senderId}-${msg.createdAt}`,
+              sender: msg.senderId === selectedFriend.id ? "friend" : "you",
+              text: msg.message,
+              createdAt: msg.createdAt,
+              serverOrder: index, // Track server response order
+            }))
+            // Pre-sort by ID to ensure correct order
+            .sort((a, b) => {
+              const idA = parseInt(a.id) || 0;
+              const idB = parseInt(b.id) || 0;
+              return idA - idB;
+            });
 
-        const newMsgs = res.data.map((msg, index) => ({
-          id: msg.id || `${msg.senderId}-${msg.createdAt}`,
-          sender: msg.senderId === selectedFriend.id ? "friend" : "you",
-          text: msg.message,
-          createdAt: msg.createdAt,
-          pollingIndex: index, // Track polling order
-        }));
-
-        if (newMsgs.length > 0) {
-          console.log('Polling - New messages before filtering:', JSON.stringify(newMsgs.map(m => ({ text: m.text, createdAt: m.createdAt, id: m.id })), null, 2)); // Debug log
-          
           setChatHistory((prev) => {
             const existing = prev[selectedFriend.id] || [];
-            const existingIds = new Set(existing.map(msg => msg.id));
-            const filtered = newMsgs.filter(newMsg => !existingIds.has(newMsg.id));
+            const existingIds = new Set(existing.map(msg => parseInt(msg.id) || 0));
+            const filtered = newMsgs.filter(newMsg => !existingIds.has(parseInt(newMsg.id) || 0));
             
             if (filtered.length === 0) return prev;
             
-            console.log('Polling - Filtered new messages:', JSON.stringify(filtered.map(m => ({ text: m.text, createdAt: m.createdAt, id: m.id })), null, 2)); // Debug log
-            
-            // ENHANCED: More robust sorting with multiple fallbacks
+            // Combine and sort all messages with improved logic
             const allMessages = [...existing, ...filtered];
             const sortedMessages = allMessages.sort((a, b) => {
+              // Primary sort: by numeric ID (most reliable for message order)
+              const idA = parseInt(a.id) || 0;
+              const idB = parseInt(b.id) || 0;
+              
+              if (idA !== idB && idA > 0 && idB > 0) {
+                return idA - idB;
+              }
+              
+              // Secondary sort: by timestamp
               const timeA = new Date(a.createdAt).getTime();
               const timeB = new Date(b.createdAt).getTime();
               
-              // Primary sort: by timestamp
               if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) {
                 return timeA - timeB;
               }
               
-              // Secondary sort: if timestamps are the same or invalid, use ID
-              if (a.id && b.id && a.id !== b.id) {
-                // Try to extract numeric part from ID for better sorting
-                const idA = parseInt(a.id.toString().replace(/\D/g, '')) || 0;
-                const idB = parseInt(b.id.toString().replace(/\D/g, '')) || 0;
-                if (idA !== idB) {
-                  return idA - idB;
-                }
-                return a.id.toString().localeCompare(b.id.toString());
-              }
-              
-              // Tertiary sort: by polling/original index if available
-              const indexA = a.pollingIndex || a.originalIndex || 0;
-              const indexB = b.pollingIndex || b.originalIndex || 0;
-              return indexA - indexB;
+              // Fallback: by string comparison of IDs
+              return (a.id || '').toString().localeCompare((b.id || '').toString());
             });
-            
-            console.log('Polling - Final sorted messages:', JSON.stringify(sortedMessages.map(m => ({ text: m.text, createdAt: m.createdAt, id: m.id })), null, 2)); // Debug log
             
             return {
               ...prev,
@@ -391,10 +395,21 @@ const Chat = () => {
         }
       } catch (err) {
         console.error("Polling error", err);
+      } finally {
+        isPolling = false;
+        // Schedule next poll with adaptive interval
+        pollTimeout = setTimeout(pollForMessages, 1500);
       }
-    }, 2000);
+    };
 
-    return () => clearInterval(interval);
+    // Start polling with a slight delay
+    pollTimeout = setTimeout(pollForMessages, 1000);
+
+    return () => {
+      if (pollTimeout) {
+        clearTimeout(pollTimeout);
+      }
+    };
   }, [selectedFriend, chatHistory, isNearBottom, scrollToBottom, token]);
 
   const currentMessages = selectedFriend ? (chatHistory[selectedFriend.id] || []) : [];
