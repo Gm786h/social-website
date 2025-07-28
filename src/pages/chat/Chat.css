@@ -501,11 +501,134 @@
     color: #e9edef;
   }
 }
+@media (max-width: 480px) {
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
 
+  .chat-sidebar {
+    width: 100%;
+    height: 40%;
+    overflow-y: auto;
+    border-bottom: 1px solid #ccc;
+  }
 
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 60%;
+  }
 
-/* Force scroll to bottom when new message added */
-.chat-messages .message-anchor {
-  height: 1px;
-  margin-top: auto;
+  .chat-header {
+    padding: 10px;
+    background-color: #f1f1f1;
+    font-size: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #fff;
+    font-size: 0.9rem;
+  }
+
+  .chat-input {
+    display: flex;
+    border-top: 1px solid #ccc;
+  }
+
+  .chat-input input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1rem;
+    border: none;
+    border-right: 1px solid #ccc;
+  }
+
+  .chat-input button {
+    padding: 10px 15px;
+    font-size: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+  }
+
+  .Friendlist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    max-height: 100%;
+  }
+
+  .Friendlist li {
+    border-bottom: 1px solid #eee;
+  }
+
+  .Friendlist button {
+    width: 100%;
+    text-align: left;
+    padding: 12px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+  }
+
+  .Friendlist button.active {
+    background-color: #e0e0e0;
+  }
+
+  .chat-bubble {
+    max-width: 80%;
+    margin: 5px 0;
+    padding: 8px 12px;
+    border-radius: 12px;
+    display: inline-block;
+    word-wrap: break-word;
+  }
+
+  .chat-bubble.you {
+    background-color: #d1ffd6;
+    align-self: flex-end;
+  }
+
+  .chat-bubble.friend {
+    background-color: #f1f1f1;
+    align-self: flex-start;
+  }
+
+  .sending-indicator {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-left: 5px;
+  }
+
+  .failed-indicator {
+    font-size: 0.75rem;
+    color: red;
+    margin-left: 5px;
+  }
+
+  .loading-spinner {
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 10px;
+    color: #666;
+  }
+
+  .no-more-messages,
+  .no-more-friends {
+    text-align: center;
+    padding: 10px;
+    font-size: 0.9rem;
+    color: #888;
+  }
 }
