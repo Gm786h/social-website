@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./post.css";
 import axios from "axios";
-
+const Base_Url = import.meta.env.VITE_BASE_URL;
 const Post = ({
   postId,
   username,
@@ -25,7 +25,7 @@ const Post = ({
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:3000/api/likes/${postId}/status`,
+        `${Base_Url}/api/likes/${postId}/status`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -55,7 +55,7 @@ const handleLike = async () => {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
-      `http://localhost:3000/api/likes/${postId}/like`,
+      `${Base_Url}/api/likes/${postId}/like`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -77,7 +77,7 @@ const handleLike = async () => {
       try {
         const token = localStorage.getItem("token");
         await axios.post(
-          `http://localhost:3000/api/comments/${postId}`,
+          `${Base_Url}/api/comments/${postId}`,
           { content: input },
           { headers: { Authorization: `Bearer ${token}` } }
         );
