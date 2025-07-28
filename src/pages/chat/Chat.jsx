@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./Chat.css";
 import axios from "axios";
+import { io } from "socket.io-client";
+
 const Base_Url = import.meta.env.VITE_BASE_URL;
+
 const Chat = () => {
   const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -19,8 +22,112 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const friendsListRef = useRef(null);
   const isInitialLoadRef = useRef(false);
+  const socketRef = useRef(null);
   
   const token = localStorage.getItem("token");
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (!token) return;
+
+    // Initialize socket connection
+    socketRef.current = io(Base_Url, {
+      auth: {
+        token: token
+      },
+      transports: ['websocket', 'polling']
+    });
+
+    // Socket connection events
+    socketRef.current.on('connect', () => {
+      console.log('Connected to server');
+    });
+
+    socketRef.current.on('disconnect', () => {
+      console.log('Disconnected from server');
+    });
+
+    // Listen for new messages
+    socketRef.current.on('newMessage', (messageData) => {
+      const newMessage = {
+        id: messageData.id,
+        sender: messageData.senderId === parseInt(localStorage.getItem('userId')) ? "you" : "friend",
+        text: messageData.message,
+        createdAt: messageData.createdAt,
+      };
+
+      // Add message to chat history
+      setChatHistory((prev) => {
+        const friendId = messageData.senderId === parseInt(localStorage.getItem('userId')) 
+          ? messageData.receiverId 
+          : messageData.senderId;
+        
+        const existingMessages = prev[friendId] || [];
+        const messageExists = existingMessages.some(msg => parseInt(msg.id) === parseInt(messageData.id));
+        
+        if (messageExists) return prev;
+
+        const updatedMessages = [...existingMessages, newMessage].sort((a, b) => {
+          const idA = parseInt(a.id) || 0;
+          const idB = parseInt(b.id) || 0;
+          return idA - idB;
+        });
+
+        return {
+          ...prev,
+          [friendId]: updatedMessages,
+        };
+      });
+
+      // Auto-scroll if user is near bottom and message is for current chat
+      const currentFriendId = selectedFriend?.id;
+      const messageFriendId = messageData.senderId === parseInt(localStorage.getItem('userId')) 
+        ? messageData.receiverId 
+        : messageData.senderId;
+      
+      if (currentFriendId === messageFriendId && isNearBottom()) {
+        setTimeout(scrollToBottom, 100);
+      }
+    });
+
+    // Listen for message status updates
+    socketRef.current.on('messageDelivered', (data) => {
+      setChatHistory((prev) => {
+        const friendMessages = prev[data.receiverId] || [];
+        const updatedMessages = friendMessages.map(msg => 
+          msg.id === data.tempId || parseInt(msg.id) === parseInt(data.messageId)
+            ? { ...msg, id: data.messageId, sending: false, delivered: true }
+            : msg
+        );
+        
+        return {
+          ...prev,
+          [data.receiverId]: updatedMessages,
+        };
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [token]);
+
+  // Join room when friend is selected
+  useEffect(() => {
+    if (socketRef.current && selectedFriend) {
+      const userId = parseInt(localStorage.getItem('userId'));
+      const roomId = [userId, selectedFriend.id].sort().join('-');
+      
+      socketRef.current.emit('joinRoom', {
+        roomId: roomId,
+        userId: userId,
+        friendId: selectedFriend.id
+      });
+    }
+  }, [selectedFriend]);
 
   const fetchFriends = useCallback(async (pageNum = 1, isLoadMore = false) => {
     if (loadingFriends) return;
@@ -280,21 +387,31 @@ const Chat = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${Base_Url}/api/message`,
-        { receiverId: selectedFriend.id, message: msg },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      // Update message status
-      setChatHistory((prev) => ({
-        ...prev,
-        [selectedFriend.id]: prev[selectedFriend.id].map(m => 
-          m.id === tempId 
-            ? { ...m, id: response.data.id || tempId, sending: false }
-            : m
-        ),
-      }));
+      // Send message via Socket.IO instead of HTTP
+      if (socketRef.current) {
+        socketRef.current.emit('sendMessage', {
+          receiverId: selectedFriend.id,
+          message: msg,
+          tempId: tempId
+        });
+      } else {
+        // Fallback to HTTP if socket is not available
+        const response = await axios.post(
+          `${Base_Url}/api/message`,
+          { receiverId: selectedFriend.id, message: msg },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        // Update message status
+        setChatHistory((prev) => ({
+          ...prev,
+          [selectedFriend.id]: prev[selectedFriend.id].map(m => 
+            m.id === tempId 
+              ? { ...m, id: response.data.id || tempId, sending: false }
+              : m
+          ),
+        }));
+      }
 
     } catch (err) {
       console.error("Failed to send message", err);
@@ -308,109 +425,6 @@ const Chat = () => {
       }));
     }
   };
-
-  // ENHANCED: Poll for new messages with improved ordering and debouncing
-  useEffect(() => {
-    if (!selectedFriend) return;
-
-    let pollTimeout;
-    let isPolling = false;
-
-    const pollForMessages = async () => {
-      if (isPolling) return;
-      isPolling = true;
-
-      try {
-        const msgs = chatHistory[selectedFriend.id] || [];
-        if (msgs.length === 0) {
-          isPolling = false;
-          return;
-        }
-
-        // Use the last message ID instead of timestamp for more reliable polling
-        const lastMessageId = Math.max(...msgs.map(m => parseInt(m.id) || 0));
-        const wasNearBottom = isNearBottom();
-
-        const res = await axios.get(
-          `${Base_Url}/api/message/${selectedFriend.id}?afterId=${lastMessageId}&limit=20`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (res.data && res.data.length > 0) {
-          const newMsgs = res.data
-            .map((msg, index) => ({
-              id: msg.id || `${msg.senderId}-${msg.createdAt}`,
-              sender: msg.senderId === selectedFriend.id ? "friend" : "you",
-              text: msg.message,
-              createdAt: msg.createdAt,
-              serverOrder: index, // Track server response order
-            }))
-            // Pre-sort by ID to ensure correct order
-            .sort((a, b) => {
-              const idA = parseInt(a.id) || 0;
-              const idB = parseInt(b.id) || 0;
-              return idA - idB;
-            });
-
-          setChatHistory((prev) => {
-            const existing = prev[selectedFriend.id] || [];
-            const existingIds = new Set(existing.map(msg => parseInt(msg.id) || 0));
-            const filtered = newMsgs.filter(newMsg => !existingIds.has(parseInt(newMsg.id) || 0));
-            
-            if (filtered.length === 0) return prev;
-            
-            // Combine and sort all messages with improved logic
-            const allMessages = [...existing, ...filtered];
-            const sortedMessages = allMessages.sort((a, b) => {
-              // Primary sort: by numeric ID (most reliable for message order)
-              const idA = parseInt(a.id) || 0;
-              const idB = parseInt(b.id) || 0;
-              
-              if (idA !== idB && idA > 0 && idB > 0) {
-                return idA - idB;
-              }
-              
-              // Secondary sort: by timestamp
-              const timeA = new Date(a.createdAt).getTime();
-              const timeB = new Date(b.createdAt).getTime();
-              
-              if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) {
-                return timeA - timeB;
-              }
-              
-              // Fallback: by string comparison of IDs
-              return (a.id || '').toString().localeCompare((b.id || '').toString());
-            });
-            
-            return {
-              ...prev,
-              [selectedFriend.id]: sortedMessages,
-            };
-          });
-
-          // Auto-scroll if user was near bottom
-          if (wasNearBottom) {
-            setTimeout(scrollToBottom, 100);
-          }
-        }
-      } catch (err) {
-        console.error("Polling error", err);
-      } finally {
-        isPolling = false;
-        // Schedule next poll with adaptive interval
-        pollTimeout = setTimeout(pollForMessages, 1500);
-      }
-    };
-
-    // Start polling with a slight delay
-    pollTimeout = setTimeout(pollForMessages, 1000);
-
-    return () => {
-      if (pollTimeout) {
-        clearTimeout(pollTimeout);
-      }
-    };
-  }, [selectedFriend, chatHistory, isNearBottom, scrollToBottom, token]);
 
   const currentMessages = selectedFriend ? (chatHistory[selectedFriend.id] || []) : [];
 
@@ -474,11 +488,12 @@ const Chat = () => {
               key={msg.id || i}
               className={`chat-bubble ${msg.sender === "you" ? "you" : "friend"} ${
                 msg.sending ? "sending" : ""
-              } ${msg.failed ? "failed" : ""}`}
+              } ${msg.failed ? "failed" : ""} ${msg.delivered ? "delivered" : ""}`}
             >
               {msg.text}
               {msg.sending && <span className="sending-indicator">●</span>}
               {msg.failed && <span className="failed-indicator">⚠</span>}
+              {msg.delivered && <span className="delivered-indicator">✓</span>}
             </div>
           ))}
           
