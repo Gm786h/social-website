@@ -421,7 +421,7 @@
   }
 }
 
-@media (max-width: 300px) {
+@media (max-width: 600px) {
   .chat-container {
     flex-direction: column;
     height: 90vh;
