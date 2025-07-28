@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './header.css';
-
+const Base_Url = import.meta.env.VITE_BASE_URL;
 function Header({ isLoggedIn, setIsLoggedIn }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,7 +19,7 @@ function Header({ isLoggedIn, setIsLoggedIn }) {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await axios.get('http://localhost:3000/api/profile/me', {
+        const res = await axios.get(`${Base_Url}/api/profile/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfileImage(res.data.profileImage);
