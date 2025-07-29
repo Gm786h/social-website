@@ -514,19 +514,20 @@
 /* Add this to your existing chat CSS */
 
 @media (max-width: 480px) {
-  /* Fix external scrollbar issue - prevent page scrolling */
-  body {
+  /* Only apply scroll prevention when chat is active */
+  body.chat-active {
     overflow: hidden !important;
     height: 100vh !important;
     position: fixed !important;
     width: 100% !important;
   }
   
-  /* Ensure the main page container doesn't scroll */
-  html {
+  /* Ensure the main page container doesn't scroll when chat is active */
+  html.chat-active {
     overflow: hidden !important;
     height: 100vh !important;
   }
+  
   /* Fix large friend list icons */
   .chat-container .Friendlist button::before {
     width: 35px !important;
@@ -552,7 +553,6 @@
     font-size: 16px !important;
   }
   
-  
   /* Fix chat container positioning to prevent external scrolling */
   .chat-container {
     height: calc(100vh - 80px) !important; /* Account for header height */
@@ -564,6 +564,7 @@
     top: 80px !important; /* Adjust based on your header height */
     left: 0 !important;
     width: 100% !important;
+    z-index: 1000 !important; /* Ensure chat appears above other content */
   }
   
   .chat-container .chat-sidebar {
@@ -613,6 +614,7 @@
     background: #f0f2f5 !important;
     border-top: 1px solid #d1d7db !important;
     box-sizing: border-box !important;
+    z-index: 1001 !important; /* Ensure input appears above chat content */
   }
   
   .chat-container .chat-input input {
