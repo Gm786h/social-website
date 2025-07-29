@@ -501,134 +501,179 @@
     color: #e9edef;
   }
 }
+/* Mobile Chat Fixes for Small Devices - Max Width 480px */
+/* Add this to your existing chat CSS */
+
+/* Mobile Chat Fixes for Small Devices - Max Width 480px */
+/* Add this to your existing chat CSS */
+
+/* Mobile Chat Fixes for Small Devices - Max Width 480px */
+/* Add this to your existing chat CSS */
+
+/* Mobile Chat Fixes for Small Devices - Max Width 480px */
+/* Add this to your existing chat CSS */
+
 @media (max-width: 480px) {
+  /* Fix external scrollbar issue - prevent page scrolling */
+  body {
+    overflow: hidden !important;
+    height: 100vh !important;
+    position: fixed !important;
+    width: 100% !important;
+  }
+  
+  /* Ensure the main page container doesn't scroll */
+  html {
+    overflow: hidden !important;
+    height: 100vh !important;
+  }
+  /* Fix large friend list icons */
+  .chat-container .Friendlist button::before {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 14px !important;
+  }
+  
+  .chat-container .Friendlist button::after {
+    left: 27px !important;
+    font-size: 12px !important;
+  }
+  
+  .chat-container .Friendlist button {
+    padding: 12px 15px !important;
+    gap: 10px !important;
+    font-size: 14px !important;
+  }
+  
+  /* Fix chat header icon */
+  .chat-container .chat-header::before {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+  }
+  
+  
+  /* Fix chat container positioning to prevent external scrolling */
   .chat-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
+    height: calc(100vh - 80px) !important; /* Account for header height */
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    top: 80px !important; /* Adjust based on your header height */
+    left: 0 !important;
+    width: 100% !important;
   }
-
-  .chat-sidebar {
-    width: 100%;
-    height: 40%;
-    overflow-y: auto;
-    border-bottom: 1px solid #ccc;
+  
+  .chat-container .chat-sidebar {
+    height: 35vh !important;
+    min-height: 150px !important;
+    overflow: hidden !important;
   }
-
-  .chat-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: 60%;
+  
+  .chat-container .Friendlist {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: calc(28vh - 70px) !important;
   }
-
-  .chat-header {
-    padding: 10px;
-    background-color: #f1f1f1;
-    font-size: 1rem;
-    text-align: center;
-    border-bottom: 1px solid #ccc;
+  
+  .chat-container .chat-main {
+    height: 65vh !important;
+    overflow: hidden !important;
   }
-
-  .chat-messages {
-    flex: 1;
-    padding: 10px;
-    overflow-y: auto;
-    background-color: #fff;
-    font-size: 0.9rem;
+  
+  .chat-container .chat-messages {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 15px 10px 70px 10px !important; /* Added bottom padding for input space */
+    height: calc(65vh - 180px) !important; /* Adjusted for fixed input */
   }
-
-  .chat-input {
-    display: flex;
-    border-top: 1px solid #ccc;
+  
+  /* Improve message bubbles for small screens */
+  .chat-container .chat-bubble {
+    max-width: 85% !important;
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+    margin-bottom: 6px !important;
   }
-
-  .chat-input input {
-    flex: 1;
-    padding: 10px;
-    font-size: 1rem;
-    border: none;
-    border-right: 1px solid #ccc;
+  
+  /* Fix input area and ensure send button is visible */
+  .chat-container .chat-input {
+    padding: 10px 15px !important;
+    min-height: 60px !important;
+    display: flex !important;
+    gap: 10px !important;
+    align-items: center !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: #f0f2f5 !important;
+    border-top: 1px solid #d1d7db !important;
+    box-sizing: border-box !important;
   }
-
-  .chat-input button {
-    padding: 10px 15px;
-    font-size: 1rem;
-    background-color: #007bff;
-    color: white;
-    border: none;
+  
+  .chat-container .chat-input input {
+    flex: 1 !important;
+    padding: 10px 15px !important;
+    font-size: 14px !important;
+    border: none !important;
+    border-radius: 25px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
   }
-
-  .Friendlist {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    overflow-y: auto;
-    max-height: 100%;
+  
+  .chat-container .chat-input button {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    font-size: 18px !important;
+    flex-shrink: 0 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%) !important;
+    color: white !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3) !important;
+    margin-left: 8px !important;
   }
-
-  .Friendlist li {
-    border-bottom: 1px solid #eee;
+  
+  .chat-container .chat-input button::before {
+    content: '▶' !important;
+    font-size: 18px !important;
+    color: white !important;
+    display: block !important;
+    line-height: 1 !important;
   }
-
-  .Friendlist button {
-    width: 100%;
-    text-align: left;
-    padding: 12px;
-    background: none;
-    border: none;
-    font-size: 1rem;
+  
+  /* Optimize scrollbars for mobile */
+  .chat-container .chat-messages::-webkit-scrollbar,
+  .chat-container .Friendlist::-webkit-scrollbar {
+    width: 3px !important;
   }
-
-  .Friendlist button.active {
-    background-color: #e0e0e0;
+  
+  .chat-container .chat-messages::-webkit-scrollbar-thumb,
+  .chat-container .Friendlist::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 2px !important;
   }
-
-  .chat-bubble {
-    max-width: 80%;
-    margin: 5px 0;
-    padding: 8px 12px;
-    border-radius: 12px;
-    display: inline-block;
-    word-wrap: break-word;
+  
+  /* Remove heavy box shadows for better mobile performance */
+  .chat-container .chat-bubble {
+    box-shadow: none !important;
   }
-
-  .chat-bubble.you {
-    background-color: #d1ffd6;
-    align-self: flex-end;
+  
+  .chat-container .chat-input input {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
   }
-
-  .chat-bubble.friend {
-    background-color: #f1f1f1;
-    align-self: flex-start;
-  }
-
-  .sending-indicator {
-    font-size: 0.75rem;
-    color: #aaa;
-    margin-left: 5px;
-  }
-
-  .failed-indicator {
-    font-size: 0.75rem;
-    color: red;
-    margin-left: 5px;
-  }
-
-  .loading-spinner {
-    font-size: 0.85rem;
-    text-align: center;
-    padding: 10px;
-    color: #666;
-  }
-
-  .no-more-messages,
-  .no-more-friends {
-    text-align: center;
-    padding: 10px;
-    font-size: 0.9rem;
-    color: #888;
+  
+  .chat-container .chat-input button {
+    box-shadow: 0 1px 4px rgba(37, 211, 102, 0.2) !important;
   }
 }
